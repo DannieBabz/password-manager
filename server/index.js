@@ -39,7 +39,7 @@ app.use(cookieParser())
 app.use(express.urlencoded({ extended: false }))
 mongoose.connect('mongodb://127.0.0.1:27017/users')
 
-
+// Register API endpoint
 app.post('/register', async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -54,28 +54,38 @@ app.post('/register', async (req, res) => {
         password: hashedPassword,
     };
 
+    // Creates the model in the database
     UserModel.create(newUser)
         .then(usersPwd => res.json(usersPwd))
         .catch(err => res.json(err));
 });
 
 
+//Log in API endpoint 
+
 app.post('/login', (req, res) => {
 
     const { email, password } = req.body;
 
+    // Finds user in the database by email
     UserModel.findOne({ email: email })
         .then(user => {
             if (!user) {
                 res.json("Invalid Credentials! Try Again");
             } else { 
                 console.log(user)
+
+                // Compares hashed password with password entered
+
                 bcrypt.compare(password, user.password, (err, isMatch) => {
                     if (err) {
                         console.log("Password Mismatch")
                     };
                     if (isMatch) {
                         console.log("password match")
+
+                        // JWT
+
                         const token = jwt.sign(
                             { email: user.email, id: user._id, name: user.name },
                             your_secret_key,
@@ -95,12 +105,13 @@ app.post('/login', (req, res) => {
         });
 });
 
-
+// Dashboard API  endpoint
 
 app.get('/dashboard', (req, res) => {
     const { token } = req.cookies;
     console.log('Token:', token);
     if(token){
+        // JWT Verification
         jwt.verify(token, your_secret_key, async (err, decoded) => {
             if (err) {
                 console.error('JWT verification error:', err);
@@ -123,10 +134,44 @@ app.get('/dashboard', (req, res) => {
     }
 })
 
+// Logout API endpoint
+
 app.post('/logout', (req, res) => {
     res.clearCookie('token').json({ message: 'Logged out successfully' });
 
 });
+
+app.post('/dataEntry', (req, res) => {
+    const { title, url, password } = req.body;
+    const { token } = req.cookies;
+
+    if(token){
+        // JWT Verification
+        jwt.verify(token, your_secret_key, async (err, userData) => {
+            if (err) {
+                console.error('JWT verification error:', err);
+                return res.status(403).json({ message: 'Unauthorized' });
+            }
+            try {
+                const user = await UserModel.findById(userData.id);
+                if (!user) {
+                    return res.status(404).json({ message: 'User not found' });
+                }
+                user.entries.push({title, url, password});
+                await user.save();
+                res.status(200).json("Password Saved")
+            } catch (err) {
+                console.error('Database error:', err);
+                res.status(500).json({ message: 'Server error' });
+            }
+        });
+    } else{
+        res.json("Unauthorized")
+
+    }
+
+
+})
 
 const port = 3001;
 app.listen(port, () => {

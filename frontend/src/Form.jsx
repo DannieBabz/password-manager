@@ -18,10 +18,15 @@ const Form = () => {
 
     const navigate = useNavigate();
 
+    // Handles what happens when the user logs in
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         const { email, password } = data
         await login(email, password);
+
+        // Data fetch from server for authentication
+
         axios.post('http://localhost:3001/login', { email, password })
         .then(res => {
             if(res.data == "Success"){
@@ -30,6 +35,7 @@ const Form = () => {
 
                 navigate("/dashboard");
             } else{
+                setData({email: "", password: ""})
                 toast.error("User does not exist")
             }
         })

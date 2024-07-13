@@ -13,7 +13,16 @@ const UserSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
-    }
+    },
+    entries: [{
+        title: String,
+        url: String,
+        password: String,
+        date: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 })
 
 const UserModel = mongoose.model("signup", UserSchema)

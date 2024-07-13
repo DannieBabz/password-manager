@@ -15,9 +15,14 @@ const Signup = () => {
     // const [confirmPassword, setConfirmPassword] = useState("");
     const navigate = useNavigate();
 
+//  Handles the signup request
+
     const handleSubmit = e => {
         e.preventDefault();
         const { name, email, password } = data;
+
+        // Sends entered data to the server 
+
         axios.post('http://localhost:3001/register', { name, email, password })
             .then(res => {
                 console.log(res);
